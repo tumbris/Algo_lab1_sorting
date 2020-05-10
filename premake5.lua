@@ -31,11 +31,16 @@ workspace "Sorting"
         targetdir (TargetDir)
 
         vpaths {
-            ["Includes"] = "include/**.h",
-            ["Sources"] = "src/**.cpp"
+            ["Includes/*"] = "include/**.h",
+            ["Sources/*"] = "src/**.cpp"
         }
 
         includedirs {"include"}
+
+        files {
+            "include/**.h",
+            "src/**.cpp"
+        }
 
     filter {"configurations:Debug"}
         defines 
