@@ -7,6 +7,7 @@
 #include <limits>
 #include <future>
 #include <cmath>
+#include <optional>
 #include <cassert>
 
 namespace sg
@@ -149,6 +150,138 @@ namespace sg
                 return hoares_partition(L, R, pivot);
             }
         }
+
+        namespace lib_sort
+        {
+            template <class T>
+            std::vector<std::optional<T>> prepare_lib_sort(std::size_t epsilon, std::size_t n)
+            {
+                return std::vector<std::optional<T>>((1 + epsilon) * n, std::nullopt);
+            }
+
+            template <class T>
+            std::size_t searchFree(const std::vector<std::optional<T>>& sorted, const T& element, std::int64_t last) {
+                std::int64_t first = 0;
+
+                while (last >= 0 && !(sorted[last].has_value()))
+                {
+                    last--;
+                }
+                while (first <= last && !(sorted[first].has_value()))
+                {
+                    first++;
+                }
+
+                while (first <= last)
+                {
+                    std::int64_t middle = (first + last) / 2;
+                    if (!(sorted[middle].has_value()))
+                    {
+                        auto tmp = middle + 1;
+                        while (tmp < last && !(sorted[tmp].has_value())) tmp++;
+                        if (sorted[tmp].has_value() && sorted[tmp].value() > element) 
+                        {
+                            tmp = middle - 1;
+                            while (middle > first && !(sorted[middle].has_value())) middle--;
+                            if (/*!(sorted[middle].has_value()) || */sorted[middle] < element)
+                            {
+                                return middle;
+                            }
+                            last = middle - 1;
+                        }
+                        else first = tmp + 1;
+                    }
+                    else if (sorted[middle].value() < element) 
+                    {
+                        first = middle + 1;
+                    }
+                    else 
+                    {
+                        last = middle - 1;
+                    }
+                }
+                if (last >= 0 && !(sorted[last].has_value())) last--;
+                return last;
+            }
+
+            template <class RandomAccessIt>
+            void lib_sort(RandomAccessIt first, RandomAccessIt last, std::vector<std::optional<it_value_t<RandomAccessIt>>>& S)
+            {
+                if (last <= first) return;
+
+                std::int64_t size = last - first;
+
+
+                std::int64_t goal = 1;
+                std::int64_t pos = 1;
+
+                S[0] = *first;
+
+                std::int64_t sLen = std::max(static_cast<std::int64_t>(1 + EPSILON), goal + 1);
+
+                while (pos < size)
+                {
+                    for (std::int64_t j = 0; j < goal; j++)
+                    {
+                        std::int64_t insPos = searchFree(S, *(first + pos),sLen - 1);
+                        insPos++;
+
+                        if (S[insPos].has_value())
+                        {
+                            std::int64_t nextFree = insPos + 1;
+                            while (S[nextFree].has_value()) nextFree++;
+                            if (nextFree >= sLen)
+                            {
+                                insPos--;
+                                if (S[insPos].has_value())
+                                {
+                                    nextFree = insPos - 1;
+                                    while (S[nextFree].has_value()) nextFree--;
+                                    while (nextFree < insPos)
+                                    {
+                                        S[nextFree] = S[nextFree + 1];
+                                        nextFree++;
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                while (nextFree > insPos)
+                                {
+                                    S[nextFree] = S[nextFree - 1];
+                                    nextFree--;
+                                }
+                            }
+                        }
+                        else if (insPos >= sLen)
+                        {
+                            insPos--;
+                            std::int64_t nextFree = insPos - 1;
+                            while (S[nextFree].has_value()) nextFree--;
+                            while (nextFree < insPos)
+                            {
+                                S[nextFree] = S[nextFree + 1];
+                                nextFree++;
+                            }
+                        }
+
+                        S[insPos] = *(first + pos++);
+
+                        if (pos >= size)
+                            return;
+                    }
+
+                    for (std::int64_t j = sLen - 1, k = std::min(goal * (2 + 2 * EPSILON), (1 + EPSILON) * size) - 1,
+                        step = (k + 1) / (j + 1); j >= 0; j--, k -= step) {
+                        S[k] = S[j];
+                        S[j] = std::nullopt;
+                    }
+
+                    sLen = std::min(goal * (2 + 2 * EPSILON), size * (1 + EPSILON));
+                    goal <<= 1;
+                }
+            }
+        }
     }
 
     template <class RandomAccessIt>
@@ -214,6 +347,28 @@ namespace sg
                 auto cut = block_partition(first, last, pivot);
                 block_qsort(first, cut);
                 block_qsort(cut, last);
+            }
+        }
+    }
+
+    template <class RandomAccessIt>
+    void library_sort(RandomAccessIt first, RandomAccessIt last)
+    {
+        using namespace details::lib_sort;
+        using value_type = std::remove_reference_t<decltype(*first)>;
+
+        if (first < last)
+        {
+            auto S = prepare_lib_sort<value_type>(EPSILON, last - first);
+            lib_sort(first, last, S);
+
+            auto head = first;
+            for (auto it = S.begin(); it != S.end() && head != last; ++it)
+            {
+                if (it->has_value())
+                {
+                    *(head++) = it->value();
+                }
             }
         }
     }
