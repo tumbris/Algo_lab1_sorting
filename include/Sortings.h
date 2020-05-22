@@ -5,7 +5,6 @@
 #include <type_traits>
 #include <algorithm>
 #include <limits>
-#include <future>
 #include <cmath>
 #include <optional>
 #include <cassert>
@@ -56,9 +55,9 @@ namespace sg
             {
                 auto size = std::distance(first, last) + 1;
 
-                if (size < details::INTROSORT_THRESHOLD)
+                if (size < details::introsort::INTROSORT_THRESHOLD)
                 {
-                    ::insertion_sort(first, last);
+                    insertion_sort(first, last);
                     return;
                 }
 
@@ -160,7 +159,7 @@ namespace sg
             }
 
             template <class T>
-            std::size_t searchFree(const std::vector<std::optional<T>>& sorted, const T& element, std::int64_t last) {
+            std::size_t search_free(const std::vector<std::optional<T>>& sorted, const T& element, std::int64_t last) {
                 std::int64_t first = 0;
 
                 while (last >= 0 && !(sorted[last].has_value()))
@@ -183,7 +182,7 @@ namespace sg
                         {
                             tmp = middle - 1;
                             while (middle > first && !(sorted[middle].has_value())) middle--;
-                            if (/*!(sorted[middle].has_value()) || */sorted[middle] < element)
+                            if (!(sorted[middle].has_value()) || sorted[middle] < element)
                             {
                                 return middle;
                             }
@@ -223,7 +222,7 @@ namespace sg
                 {
                     for (std::int64_t j = 0; j < goal; j++)
                     {
-                        std::int64_t insPos = searchFree(S, *(first + pos),sLen - 1);
+                        std::int64_t insPos = search_free(S, *(first + pos),sLen - 1);
                         insPos++;
 
                         if (S[insPos].has_value())
@@ -288,7 +287,7 @@ namespace sg
     void introsort(RandomAccessIt first, RandomAccessIt last)
     {
         std::size_t depth_limit = 2 * static_cast<std::size_t>(std::log(static_cast<double>(std::distance(first, last))));
-        details::introsort_impl(first, last - 1, depth_limit);
+        details::introsort::introsort_impl(first, last - 1, depth_limit);
     }
 
     template <class ForwardIt>
