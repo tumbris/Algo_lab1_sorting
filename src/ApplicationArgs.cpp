@@ -1,50 +1,53 @@
 #include <ApplicationArgs.h>
 
-ApplicationArgs* ApplicationArgs::instance = nullptr;
-
-void ApplicationArgs::CreateInstance(char** argc, char prefix)
+namespace sg
 {
-    instance = new ApplicationArgs(argc, prefix);
-}
+    ApplicationArgs* ApplicationArgs::instance = nullptr;
 
-ApplicationArgs* ApplicationArgs::GetInstance()
-{
-    return instance;
-}
-
-void ApplicationArgs::DestroyInstance()
-{
-    delete instance;
-}
-
-const char* ApplicationArgs::Get(std::string_view arg)
-{
-    std::string key(arg);
-    if (args.find(key) != args.end())
+    void ApplicationArgs::CreateInstance(char** argc, char prefix)
     {
-        return args.at(key).c_str();
+        instance = new ApplicationArgs(argc, prefix);
     }
-    return nullptr;
-}
 
-std::filesystem::path ApplicationArgs::GetApplicationLocation()
-{
-    return appPath;
-}
-
-ApplicationArgs::ApplicationArgs(char** argv, char prefix)
-{
-    if (argv == nullptr) return;
-
-    appPath = *(argv);
-    while (*(++argv))
+    ApplicationArgs* ApplicationArgs::GetInstance()
     {
-        if (*(argv)[0] == prefix)
+        return instance;
+    }
+
+    void ApplicationArgs::DestroyInstance()
+    {
+        delete instance;
+    }
+
+    const char* ApplicationArgs::Get(const std::string& arg)
+    {
+        std::string key(arg);
+        if (args.find(key) != args.end())
         {
-            const char* key = *(argv++);
-            if (const char* value = *(argv))
+            return args.at(key).c_str();
+        }
+        return nullptr;
+    }
+
+    std::filesystem::path ApplicationArgs::GetApplicationLocation()
+    {
+        return appPath;
+    }
+
+    ApplicationArgs::ApplicationArgs(char** argv, char prefix)
+    {
+        if (argv == nullptr) return;
+
+        appPath = *(argv);
+        while (*(++argv))
+        {
+            if (*(argv)[0] == prefix)
             {
-                args.emplace(key, value);
+                const char* key = *(argv++);
+                if (const char* value = *(argv))
+                {
+                    args.emplace(key, value);
+                }
             }
         }
     }

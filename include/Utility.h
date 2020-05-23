@@ -1,3 +1,5 @@
+#pragma once
+
 #include <type_traits>
 #include <cstdint>
 #include <cstddef>
@@ -21,7 +23,7 @@ namespace sg
         namespace block_qsort
         {
             static constexpr std::size_t BLOCK_SIZE = 128; //https://dl.acm.org/doi/fullHtml/10.1145/3274660
-            static constexpr std::size_t BQSORT_THRESHOLD = 16;
+            static constexpr std::size_t BQSORT_THRESHOLD = 2;
         }
         namespace lib_sort
         {

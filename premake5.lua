@@ -56,7 +56,7 @@ workspace "Sorting"
         }
         symbols "On"
         runtime "Debug"
-        debugargs { "-o", "../output.txt", "-N", "10000000"}
+        debugargs { "-o output.txt", "-N 10000000"}
 
     filter {"configurations:Release"}
         defines 

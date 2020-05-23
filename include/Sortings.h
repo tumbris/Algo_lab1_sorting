@@ -1,3 +1,5 @@
+#pragma once
+
 #include <Utility.h>
 
 #include <vector>
@@ -87,18 +89,6 @@ namespace sg
         namespace block_qsort
         {
             template <class RandomAccessIt>
-            RandomAccessIt hoares_partition(RandomAccessIt first, RandomAccessIt last, std::remove_reference_t<decltype(*first)> pivot)
-            {
-                while (last - first > 0)
-                {
-                    while (*first < pivot) ++first;
-                    while (*last > pivot) --last;
-                    if (last - first > 0) std::swap(*first, *last);
-                }
-                return first;
-            }
-
-            template <class RandomAccessIt>
             RandomAccessIt block_partition(RandomAccessIt first, RandomAccessIt last, std::remove_reference_t<decltype(*first)> pivot)
             {
                 std::array<std::size_t, BLOCK_SIZE> offset_l{ 0 };
@@ -112,7 +102,7 @@ namespace sg
                 auto L = first;
                 auto R = last - 1;
 
-                while (R - L + 1 > 2 * BLOCK_SIZE)
+                while (/*R - L + 1 > 2 * BLOCK_SIZE*/ false)
                 {
                     if (num_l == 0)
                     {
@@ -146,7 +136,12 @@ namespace sg
                 }
                 if (L > first) L -= BLOCK_SIZE;
                 if (R < last - 1) R += BLOCK_SIZE;
-                return hoares_partition(L, R, pivot);
+
+                auto res = std::partition(L, R + 1, [pivot](const auto& em) { return em < pivot; });
+                std::partition(res, R + 1, [pivot](const auto& em) { return em == pivot; });
+                assert(std::is_partitioned(L, res, [pivot](const auto& em) { return em <= pivot; }));
+                return res;
+                //return hoares_partition(L, R, pivot);
             }
         }
 
@@ -159,7 +154,8 @@ namespace sg
             }
 
             template <class T>
-            std::size_t search_free(const std::vector<std::optional<T>>& sorted, const T& element, std::int64_t last) {
+            std::size_t search_free(const std::vector<std::optional<T>>& sorted, const T& element, std::int64_t last)
+            {
                 std::int64_t first = 0;
 
                 while (last >= 0 && !(sorted[last].has_value()))
@@ -178,7 +174,7 @@ namespace sg
                     {
                         auto tmp = middle + 1;
                         while (tmp < last && !(sorted[tmp].has_value())) tmp++;
-                        if (sorted[tmp].has_value() && sorted[tmp].value() > element) 
+                        if (sorted[tmp].has_value() && sorted[tmp].value() > element)
                         {
                             tmp = middle - 1;
                             while (middle > first && !(sorted[middle].has_value())) middle--;
@@ -190,11 +186,11 @@ namespace sg
                         }
                         else first = tmp + 1;
                     }
-                    else if (sorted[middle].value() < element) 
+                    else if (sorted[middle].value() < element)
                     {
                         first = middle + 1;
                     }
-                    else 
+                    else
                     {
                         last = middle - 1;
                     }
@@ -222,7 +218,7 @@ namespace sg
                 {
                     for (std::int64_t j = 0; j < goal; j++)
                     {
-                        std::int64_t insPos = search_free(S, *(first + pos),sLen - 1);
+                        std::int64_t insPos = search_free(S, *(first + pos), sLen - 1);
                         insPos++;
 
                         if (S[insPos].has_value())
@@ -271,7 +267,8 @@ namespace sg
                     }
 
                     for (std::int64_t j = sLen - 1, k = std::min(goal * (2 + 2 * EPSILON), (1 + EPSILON) * size) - 1,
-                        step = (k + 1) / (j + 1); j >= 0; j--, k -= step) {
+                         step = (k + 1) / (j + 1); j >= 0; j--, k -= step)
+                    {
                         S[k] = S[j];
                         S[j] = std::nullopt;
                     }
@@ -286,8 +283,12 @@ namespace sg
     template <class RandomAccessIt>
     void introsort(RandomAccessIt first, RandomAccessIt last)
     {
-        std::size_t depth_limit = 2 * static_cast<std::size_t>(std::log(static_cast<double>(std::distance(first, last))));
-        details::introsort::introsort_impl(first, last - 1, depth_limit);
+        std::size_t size = std::distance(first, last);
+        if (size > 0)
+        {
+            std::size_t depth_limit = 2 * static_cast<std::size_t>(std::log(static_cast<double>(size)));
+            details::introsort::introsort_impl(first, last - 1, depth_limit);
+        }
     }
 
     template <class ForwardIt>
@@ -334,7 +335,7 @@ namespace sg
 
         const auto size = last - first;
 
-        if (size > 0)
+        if (size > 1)
         {
             if (size < BQSORT_THRESHOLD)
             {
@@ -344,8 +345,14 @@ namespace sg
             {
                 auto pivot = *(first + (size / 2));
                 auto cut = block_partition(first, last, pivot);
-                block_qsort(first, cut);
-                block_qsort(cut, last);
+                if (cut != first)
+                {
+                    block_qsort(first, cut);
+                }
+                if (cut != last)
+                {
+                    block_qsort(cut + 1, last);
+                }
             }
         }
     }
