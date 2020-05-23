@@ -388,7 +388,7 @@ namespace sg
                 ss << "\tLength - " << std::setw(12) << std::left << d.first.length << ", ";
                 ss << "Upper - " << std::setw(12) << std::left << d.first.upper << ", ";
                 ss << "Distribution - " << std::setw(12) << std::left << getDistStr(d.first.distribution) << ": ";
-                ss << d.second << '\n';
+                ss << d.second << " ms\n";
             }
         };
 

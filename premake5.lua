@@ -13,7 +13,6 @@ workspace "Sorting"
     {
         "Debug",
         "Release",
-        "Dist"
     }
 
     platforms
@@ -63,15 +62,6 @@ workspace "Sorting"
         {
             "NDEBUG"
             , "RELEASE"
-        }
-        optimize "On"
-        runtime "Release"
-
-    filter {"configurations:Release"}
-        defines 
-        {
-            "NDEBUG"
-            , "DIST"
         }
         optimize "On"
         runtime "Release"
